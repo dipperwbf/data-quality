@@ -12,10 +12,10 @@
 // ============================================================================
 package org.talend.dataquality.standardization.index;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +34,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.PhraseQuery;
@@ -167,7 +168,7 @@ public class SynonymIndexSearcher {
     }
 
     public void openIndexInFS(String path) throws IOException {
-        FSDirectory indexDir = FSDirectory.open(new File(path));
+        FSDirectory indexDir = FSDirectory.open(Paths.get(path));
         mgr = new SearcherManager(indexDir, null);
     }
 
@@ -412,30 +413,28 @@ public class SynonymIndexSearcher {
      * @throws java.io.IOException
      */
     private Query createCombinedQueryFor(String input, boolean fuzzy, boolean allMatch) throws IOException {
-        BooleanQuery combinedQuery = new BooleanQuery();
-        Query wordTermQuery, synTermQuery, wordQuery, synQuery;
+        Builder combinedModel = new BooleanQuery.Builder();
+        Query wordTermQuery, synTermQuery;
         wordTermQuery = getTermQuery(F_WORDTERM, input.toLowerCase(), fuzzy);
         synTermQuery = getTermQuery(F_SYNTERM, input.toLowerCase(), fuzzy);
 
         List<String> tokens = getTokensFromAnalyzer(input);
-        wordQuery = new BooleanQuery();
-        synQuery = new BooleanQuery();
+        Builder wordModel = new BooleanQuery.Builder();
+        Builder synModel = new BooleanQuery.Builder();
         for (String token : tokens) {
-            ((BooleanQuery) wordQuery).add(getTermQuery(F_WORD, token, fuzzy),
-                    allMatch ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD);
-            ((BooleanQuery) synQuery).add(getTermQuery(F_SYN, token, fuzzy),
-                    allMatch ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD);
+            wordModel.add(getTermQuery(F_WORD, token, fuzzy), allMatch ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD);
+            synModel.add(getTermQuery(F_SYN, token, fuzzy), allMatch ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD);
         }
 
         // increase importance of the reference word
-        wordTermQuery.setBoost(WORD_TERM_BOOST);
-        wordQuery.setBoost(WORD_BOOST);
+        // wordTermQuery.setBoost(WORD_TERM_BOOST);
+        // wordQuery.setBoost(WORD_BOOST);
 
-        combinedQuery.add(wordTermQuery, BooleanClause.Occur.SHOULD);
-        combinedQuery.add(synTermQuery, BooleanClause.Occur.SHOULD);
-        combinedQuery.add(wordQuery, BooleanClause.Occur.SHOULD);
-        combinedQuery.add(synQuery, BooleanClause.Occur.SHOULD);
-        return combinedQuery;
+        combinedModel.add(wordTermQuery, BooleanClause.Occur.SHOULD);
+        combinedModel.add(synTermQuery, BooleanClause.Occur.SHOULD);
+        combinedModel.add(wordModel.build(), BooleanClause.Occur.SHOULD);
+        combinedModel.add(synModel.build(), BooleanClause.Occur.SHOULD);
+        return combinedModel.build();
     }
 
     /**
@@ -447,30 +446,30 @@ public class SynonymIndexSearcher {
      * @throws java.io.IOException
      */
     private Query createCombinedQueryForPartialMatch(String input) throws IOException {
-        BooleanQuery combinedQuery = new BooleanQuery();
-        Query wordTermQuery, synTermQuery, wordQuery, synQuery;
+        Builder combinedModel = new BooleanQuery.Builder();
+        Query wordTermQuery, synTermQuery;
         wordTermQuery = getTermQuery(F_WORDTERM, input.toLowerCase(), false);
         synTermQuery = getTermQuery(F_SYNTERM, input.toLowerCase(), false);
 
         List<String> tokens = getTokensFromAnalyzer(input);
-        wordQuery = new PhraseQuery();
-        ((PhraseQuery) wordQuery).setSlop(slop);
-        synQuery = new PhraseQuery();
-        ((PhraseQuery) synQuery).setSlop(slop);
+        PhraseQuery.Builder wordModel = new PhraseQuery.Builder();
+        wordModel.setSlop(slop);
+        PhraseQuery.Builder synModel = new PhraseQuery.Builder();
+        synModel.setSlop(slop);
         for (String token : tokens) {
             token = token.toLowerCase();
-            ((PhraseQuery) wordQuery).add(new Term(F_WORD, token));
-            ((PhraseQuery) synQuery).add(new Term(F_SYN, token));
+            wordModel.add(new Term(F_WORD, token));
+            synModel.add(new Term(F_SYN, token));
         }
         // increase importance of the reference word
-        wordTermQuery.setBoost(WORD_TERM_BOOST);
-        wordQuery.setBoost(WORD_BOOST);
+        // wordTermQuery.setBoost(WORD_TERM_BOOST);
+        // wordQuery.setBoost(WORD_BOOST);
 
-        combinedQuery.add(wordTermQuery, BooleanClause.Occur.SHOULD);
-        combinedQuery.add(synTermQuery, BooleanClause.Occur.SHOULD);
-        combinedQuery.add(wordQuery, BooleanClause.Occur.SHOULD);
-        combinedQuery.add(synQuery, BooleanClause.Occur.SHOULD);
-        return combinedQuery;
+        combinedModel.add(wordTermQuery, BooleanClause.Occur.SHOULD);
+        combinedModel.add(synTermQuery, BooleanClause.Occur.SHOULD);
+        combinedModel.add(wordModel.build(), BooleanClause.Occur.SHOULD);
+        combinedModel.add(synModel.build(), BooleanClause.Occur.SHOULD);
+        return combinedModel.build();
     }
 
     /**
@@ -497,19 +496,19 @@ public class SynonymIndexSearcher {
      * @throws IOException
      */
     private Query createQueryForSemanticKeywordMatch(String input) throws IOException {
-        BooleanQuery booleanQuery = new BooleanQuery();
+        Builder booleanModel = new BooleanQuery.Builder();
         List<String> tokens = getTokensFromAnalyzer(input);
         // for keyword search, only search the beginning tokens from input
         if (tokens.size() > MAX_TOKEN_COUNT_FOR_SEMANTIC_MATCH) {
             for (int i = 0; i < MAX_TOKEN_COUNT_FOR_SEMANTIC_MATCH; i++) {
-                booleanQuery.add(getTermQuery(F_SYN, tokens.get(i), false), BooleanClause.Occur.SHOULD);
+                booleanModel.add(getTermQuery(F_SYN, tokens.get(i), false), BooleanClause.Occur.SHOULD);
             }
         } else {
             for (String token : tokens) {
-                booleanQuery.add(getTermQuery(F_SYN, token, false), BooleanClause.Occur.SHOULD);
+                booleanModel.add(getTermQuery(F_SYN, token, false), BooleanClause.Occur.SHOULD);
             }
         }
-        return booleanQuery;
+        return booleanModel.build();
     }
 
     /**
@@ -521,16 +520,16 @@ public class SynonymIndexSearcher {
      * @throws java.io.IOException
      */
     private Query createCombinedQueryForExactMatch(String input) throws IOException {
-        BooleanQuery combinedQuery = new BooleanQuery();
+        Builder combinedModel = new BooleanQuery.Builder();
         Query wordTermQuery, synTermQuery;
         wordTermQuery = getTermQuery(F_WORDTERM, input.toLowerCase(), false);
         synTermQuery = getTermQuery(F_SYNTERM, input.toLowerCase(), false);
         // increase importance of the reference word
-        wordTermQuery.setBoost(WORD_TERM_BOOST);
+        // wordTermQuery.setBoost(WORD_TERM_BOOST);
 
-        combinedQuery.add(wordTermQuery, BooleanClause.Occur.SHOULD);
-        combinedQuery.add(synTermQuery, BooleanClause.Occur.SHOULD);
-        return combinedQuery;
+        combinedModel.add(wordTermQuery, BooleanClause.Occur.SHOULD);
+        combinedModel.add(synTermQuery, BooleanClause.Occur.SHOULD);
+        return combinedModel.build();
     }
 
     public void close() {
@@ -605,7 +604,8 @@ public class SynonymIndexSearcher {
      * @throws IOException
      */
     public static List<String> getTokensFromAnalyzer(String input) throws IOException {
-        StandardTokenizer tokenStream = new StandardTokenizer(new StringReader(input));
+        StandardTokenizer tokenStream = new StandardTokenizer();
+        tokenStream.setReader(new StringReader(input));
         TokenStream result = new StandardFilter(tokenStream);
         result = new LowerCaseFilter(result);
         result = new ASCIIFoldingFilter(result);

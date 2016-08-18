@@ -31,6 +31,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -56,8 +57,8 @@ public class FirstNameStandardize {
      * containing 4 to 7 letters, while for those with 8 to 12 letters, 2 erroneous letters are allowed. a first name
      * between 12 and 15 letters, allows a distance of 3, and so on ...
      * <p>
-     * For the first names with minus sign inside, ex: Jean-Baptiste, the matching is done for Jean and Baptiste separately, and
-     * the number of tokens is also considered by Lucene.
+     * For the first names with minus sign inside, ex: Jean-Baptiste, the matching is done for Jean and Baptiste
+     * separately, and the number of tokens is also considered by Lucene.
      */
     @Deprecated
     private static final float MATCHING_SIMILARITY = 0.74f;
@@ -103,10 +104,10 @@ public class FirstNameStandardize {
     public void getFuzzySearch(String input, TopDocsCollector<?> collector) throws Exception {
         Query q = new FuzzyQuery(new Term(PluginConstant.FIRST_NAME_STANDARDIZE_NAME, input));
         Query qalias = new FuzzyQuery(new Term(PluginConstant.FIRST_NAME_STANDARDIZE_ALIAS, input));
-        BooleanQuery combinedQuery = new BooleanQuery();
-        combinedQuery.add(q, BooleanClause.Occur.SHOULD);
-        combinedQuery.add(qalias, BooleanClause.Occur.SHOULD);
-        searcher.search(combinedQuery, collector);
+        Builder combinedModel = new BooleanQuery.Builder();
+        combinedModel.add(q, BooleanClause.Occur.SHOULD);
+        combinedModel.add(qalias, BooleanClause.Occur.SHOULD);
+        searcher.search(combinedModel.build(), collector);
     }
 
     private TopDocs getFuzzySearch(String input) throws Exception {
@@ -127,7 +128,8 @@ public class FirstNameStandardize {
     }
 
     private List<String> getTokensFromAnalyzer(String input) throws IOException {
-        StandardTokenizer tokenStream = new StandardTokenizer(new StringReader(input));
+        StandardTokenizer tokenStream = new StandardTokenizer();
+        tokenStream.setReader(new StringReader(input));
         TokenStream result = new StandardFilter(tokenStream);
         result = new LowerCaseFilter(result);
         CharTermAttribute charTermAttribute = result.addAttribute(CharTermAttribute.class);
@@ -155,34 +157,34 @@ public class FirstNameStandardize {
             genderText = information2value.get(PluginConstant.FIRST_NAME_STANDARDIZE_GENDER);
         }
 
-        BooleanQuery combinedQuery = new BooleanQuery();
+        Builder combinedModel = new BooleanQuery.Builder();
 
-        BooleanQuery nameQueries = new BooleanQuery();
+        Builder nameModel = new BooleanQuery.Builder();
         // always add a non-fuzzy query on each token.
         List<String> tokens = getTokensFromAnalyzer(inputName);
         for (String token : tokens) {
             Query termQuery = getTermQuery(PluginConstant.FIRST_NAME_STANDARDIZE_NAME, token, false);
-            termQuery.setBoost(2);
-            nameQueries.add(termQuery, BooleanClause.Occur.SHOULD);
+            // termQuery.setBoost(2);
+            nameModel.add(termQuery, BooleanClause.Occur.SHOULD);
         }
 
         Query nameTermQuery = getTermQuery(PluginConstant.FIRST_NAME_STANDARDIZE_NAMETERM, inputName.toLowerCase(), fuzzySearch);
-        nameQueries.add(nameTermQuery, BooleanClause.Occur.SHOULD);
+        nameModel.add(nameTermQuery, BooleanClause.Occur.SHOULD);
 
-        combinedQuery.add(nameQueries, BooleanClause.Occur.MUST);
+        combinedModel.add(nameModel.build(), BooleanClause.Occur.MUST);
 
         if (countryText != null && !countryText.equals("")) {//$NON-NLS-1$
             Query countryQuery = getTermQuery(PluginConstant.FIRST_NAME_STANDARDIZE_COUNTRY, countryText, false);
-            countryQuery.setBoost(5);
-            combinedQuery.add(countryQuery, BooleanClause.Occur.SHOULD);
+            // countryQuery.setBoost(5);
+            combinedModel.add(countryQuery, BooleanClause.Occur.SHOULD);
         }
         if (genderText != null && !genderText.equals("")) {//$NON-NLS-1$
             Query genderQuery = getTermQuery(PluginConstant.FIRST_NAME_STANDARDIZE_GENDER, genderText, false);
-            genderQuery.setBoost(5);
-            combinedQuery.add(genderQuery, BooleanClause.Occur.SHOULD);
+            // genderQuery.setBoost(5);
+            combinedModel.add(genderQuery, BooleanClause.Occur.SHOULD);
         }
 
-        TopDocs matches = searcher.search(combinedQuery, 10);
+        TopDocs matches = searcher.search(combinedModel.build(), 10);
 
         return matches.scoreDocs;
     }
@@ -194,9 +196,9 @@ public class FirstNameStandardize {
             SortField sortfield = new SortField(PluginConstant.FIRST_NAME_STANDARDIZE_COUNT, SortField.Type.INT);
             Sort sort = new Sort(sortfield);
             // results are sorted according to a score and then to the count value
-            return TopFieldCollector.create(sort, hitsPerPage, false, false, false, false);
+            return TopFieldCollector.create(sort, hitsPerPage, false, false, false);
         } else {
-            return TopScoreDocCollector.create(hitsPerPage, false);
+            return TopScoreDocCollector.create(hitsPerPage);
         }
     }
 

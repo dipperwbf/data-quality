@@ -1,9 +1,9 @@
 package org.talend.dataquality.semantic.index.utils;
 
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -15,17 +15,13 @@ import java.util.regex.Pattern;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang.StringUtils;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.talend.dataquality.semantic.index.utils.optimizer.CategoryOptimizer;
 import org.talend.dataquality.standardization.index.SynonymIndexBuilder;
 import org.talend.dataquality.standardization.index.SynonymIndexSearcher;
@@ -41,7 +37,7 @@ public class SemanticDictionaryGenerator {
 
     private static Pattern SPLITTER = Pattern.compile("\\|");
 
-    private Analyzer analyzer = new StandardAnalyzer(CharArraySet.EMPTY_SET);
+    // private Analyzer analyzer = new StandardAnalyzer();
 
     private SynonymIndexBuilder builder = new SynonymIndexBuilder();
 
@@ -154,12 +150,12 @@ public class SemanticDictionaryGenerator {
         Document doc = new Document();
         FieldType ftWord = new FieldType();
         ftWord.setStored(true);
-        ftWord.setIndexed(false);
+        ftWord.setIndexOptions(IndexOptions.NONE);
         ftWord.setOmitNorms(true);
         ftWord.freeze();
         FieldType ftSyn = new FieldType();
         ftSyn.setStored(false);
-        ftSyn.setIndexed(true);
+        ftWord.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         ftSyn.setOmitNorms(true);
         ftSyn.freeze();
 
@@ -199,9 +195,15 @@ public class SemanticDictionaryGenerator {
     private void generateAll() {
         try {
             builder.deleteIndexFromFS(DD_PATH);
-            FSDirectory outputDir = FSDirectory.open(new File(DD_PATH));
-            IndexWriterConfig writerConfig = new IndexWriterConfig(Version.LATEST, analyzer);
-            IndexWriter writer = new IndexWriter(outputDir, writerConfig);
+            builder.initIndexInFS(DD_PATH);
+            FSDirectory outputDir = FSDirectory.open(Paths.get(DD_PATH));
+            // IndexWriterConfig writerConfig = new IndexWriterConfig(new SimpleAnalyzer());
+            // the boolean arg in the IndexWriter ctor means to
+            // create a new index, overwriting any existing index
+            // IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+            // config.setOpenMode(OpenMode.CREATE_OR_APPEND);
+
+            IndexWriter writer = builder.getWriter();
             for (DictionaryGenerationSpec spec : DictionaryGenerationSpec.values()) {
                 try {
                     generateDictionaryForSpec(spec, writer);

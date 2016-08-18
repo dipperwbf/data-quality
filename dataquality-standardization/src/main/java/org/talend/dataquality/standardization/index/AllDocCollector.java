@@ -12,20 +12,17 @@
 // ============================================================================
 package org.talend.dataquality.standardization.index;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Scorer;
 
 /**
  * DOC scorreia class global comment. Detailled comment
  */
-public class AllDocCollector extends Collector {
+public class AllDocCollector /* extends Collector */ {
 
     List<ScoreDoc> docs = new ArrayList<ScoreDoc>();
 
@@ -50,11 +47,11 @@ public class AllDocCollector extends Collector {
      * 
      * @see org.apache.lucene.search.Collector#collect(int)
      */
-    @Override
-    public void collect(int doc) throws IOException {
-        docs.add(new ScoreDoc(doc + docBase, scorer.score()));
-
-    }
+    // @Override
+    // public void collect(int doc) throws IOException {
+    // docs.add(new ScoreDoc(doc + docBase, scorer.score()));
+    //
+    // }
 
     public void reset() {
         docs.clear();
@@ -64,9 +61,9 @@ public class AllDocCollector extends Collector {
         return docs;
     }
 
-    @Override
-    public void setNextReader(AtomicReaderContext context) throws IOException {
-        this.docBase = context.docBase;
-    }
+    // @Override
+    // public void setNextReader(AtomicReaderContext context) throws IOException {
+    // this.docBase = context.docBase;
+    // }
 
 }

@@ -14,12 +14,16 @@ package org.talend.dataquality.standardization.main;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.framework.TestCase;
-
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.store.FSDirectory;
 import org.junit.Test;
+
+import junit.framework.TestCase;
 
 public class HandLuceneImplTest extends TestCase {
 
@@ -28,6 +32,8 @@ public class HandLuceneImplTest extends TestCase {
     public final static String indexfolder = "data/TalendGivenNames_custom"; // $NON-NLS-1$
 
     public final static String filename = "src/test/resources/data/TalendGivenNames.TXT"; // $NON-NLS-1$
+
+    private static final String DD_PATH = "src/main/resources/luceneIdx/dictionary/";
 
     private HandleLucene hl;
 

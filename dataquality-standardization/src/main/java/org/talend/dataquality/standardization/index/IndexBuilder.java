@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Paths;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -23,13 +24,14 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.TermVector;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.MMapDirectory;
-import org.apache.lucene.util.Version;
 import org.talend.dataquality.standardization.i18n.Messages;
 
 import com.talend.csv.CSVReader;
@@ -69,12 +71,12 @@ public class IndexBuilder {
         if (!new File(csvFileToIndex).exists() || !new File(directoryPath).isDirectory()) {
             throw new IOException(Messages.getString("IndexBuilder.error", csvFileToIndex, directoryPath));//$NON-NLS-1$
         }
-        index = new MMapDirectory(new File(directoryPath));
+        index = new MMapDirectory(Paths.get(directoryPath));
         // The same analyzer should be used for indexing and searching
         Analyzer analyzer = new StandardAnalyzer();
         // the boolean arg in the IndexWriter ctor means to
         // create a new index, overwriting any existing index
-        IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
         IndexWriter w = new IndexWriter(index, config);
         // read the data (this will be the input data of a component called tFirstNameStandardize)
         CSVReader csvReader = createCSVReader(csvFileToIndex, ',');
@@ -96,11 +98,19 @@ public class IndexBuilder {
     private static void addDoc(IndexWriter w, String name, String country, String gender, String count) throws IOException {
         if (!"".equals(country) && !"".equals(gender)) {//$NON-NLS-1$ //$NON-NLS-2$
             Document doc = new Document();
-            Field field = new Field("name", name, Field.Store.YES, Field.Index.ANALYZED, TermVector.YES);//$NON-NLS-1$
+            FieldType typeAnalyzed = new FieldType();
+            typeAnalyzed.setStored(true);
+            typeAnalyzed.setStoreTermVectors(true);
+            typeAnalyzed.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+            FieldType typeNotAnalyzed = new FieldType();
+            typeNotAnalyzed.setStored(true);
+            typeNotAnalyzed.setStoreTermVectors(true);
+            typeNotAnalyzed.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+            Field field = new Field("name", name, typeAnalyzed);//$NON-NLS-1$
             doc.add(field);
-            doc.add(new Field("country", country, Field.Store.YES, Field.Index.NOT_ANALYZED, TermVector.YES));//$NON-NLS-1$
-            doc.add(new Field("gender", gender, Field.Store.YES, Field.Index.NOT_ANALYZED, TermVector.YES));//$NON-NLS-1$
-            doc.add(new Field("count", count, Field.Store.NO, Field.Index.NOT_ANALYZED, TermVector.NO));//$NON-NLS-1$
+            doc.add(new Field("country", country, typeAnalyzed));//$NON-NLS-1$
+            doc.add(new Field("gender", gender, typeAnalyzed));//$NON-NLS-1$
+            doc.add(new Field("count", count, typeAnalyzed));//$NON-NLS-1$
             w.addDocument(doc);
         }
     }
@@ -111,13 +121,13 @@ public class IndexBuilder {
             throw new IOException(Messages.getString("IndexBuilder.error", csvFileToIndex, directoryPath));//$NON-NLS-1$
         }
 
-        index = FSDirectory.open(new File(directoryPath));
+        index = FSDirectory.open(Paths.get(directoryPath));
 
         // The same analyzer should be used for indexing and searching
         Analyzer analyzer = new StandardAnalyzer();
         // the boolean arg in the IndexWriter ctor means to
         // create a new index, overwriting any existing index
-        IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
         IndexWriter w = new IndexWriter(index, config);
         // read the data (this will be the input data of a component called
         // tFirstNameStandardize)
@@ -127,8 +137,12 @@ public class IndexBuilder {
 
             Document doc = new Document();
             String word = csvReader.get(columnsToBeIndexed[0]);
-            doc.add(new Field("word", word, Field.Store.YES, Field.Index.NO, TermVector.NO));//$NON-NLS-1$
-            doc.add(new Field("syn", word, Field.Store.YES, Field.Index.ANALYZED, TermVector.YES));//$NON-NLS-1$
+            FieldType typeAnalyzed = new FieldType();
+            typeAnalyzed.setStored(true);
+            typeAnalyzed.setStoreTermVectors(true);
+            typeAnalyzed.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+            doc.add(new Field("word", word, typeAnalyzed));//$NON-NLS-1$
+            doc.add(new Field("syn", word, typeAnalyzed));//$NON-NLS-1$
 
             if (columnsToBeIndexed.length == 1) {
                 w.addDocument(doc);
@@ -138,7 +152,7 @@ public class IndexBuilder {
             String synonyms = csvReader.get(columnsToBeIndexed[1]);
             String[] split = StringUtils.split(synonyms, "|");//$NON-NLS-1$
             for (String str : split) {
-                doc.add(new Field("syn", str, Field.Store.YES, Field.Index.ANALYZED, TermVector.YES));//$NON-NLS-1$
+                doc.add(new Field("syn", str, typeAnalyzed));//$NON-NLS-1$
             }
             w.addDocument(doc);
         }

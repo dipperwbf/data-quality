@@ -14,6 +14,7 @@ package org.talend.dataquality.standardization.index;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -29,13 +30,13 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.CheckIndex;
 import org.apache.lucene.index.CheckIndex.Status;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.talend.dataquality.standardization.i18n.Messages;
 
 /**
@@ -101,7 +102,7 @@ public class SynonymIndexBuilder {
         }
 
         try {
-            indexDir = FSDirectory.open(file);
+            indexDir = FSDirectory.open(file.toPath());
         } catch (IOException e) {
             error.set(false, Messages.getString("SynonymIndexBuilder.failLoad"));//$NON-NLS-1$
         }
@@ -347,14 +348,18 @@ public class SynonymIndexBuilder {
                 Status status = null;
                 FSDirectory directory = null;
                 try {
-                    directory = FSDirectory.open(folder);
+                    directory = FSDirectory.open(Paths.get(path));
                     CheckIndex check = new CheckIndex(directory);
                     status = check.checkIndex();
                 } catch (IOException e) {
                     LOG.error(e);
                 } finally {
                     if (directory != null) {
-                        directory.close();
+                        try {
+                            directory.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
                 boolean allDeleted = true;
@@ -441,13 +446,11 @@ public class SynonymIndexBuilder {
     /**
      * Getter for writer.
      *
-     * @return the writer
-     * @throws IOException
-     * @throws
+     * @return the writer @throws IOException @throws
      */
-    IndexWriter getWriter() throws IOException {
+    public IndexWriter getWriter() throws IOException {
         if (writer == null) {
-            IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, this.getAnalyzer());
+            IndexWriterConfig config = new IndexWriterConfig(this.getAnalyzer());
             writer = new IndexWriter(indexDir, config);
         }
         return this.writer;
@@ -494,7 +497,7 @@ public class SynonymIndexBuilder {
         Document doc = new Document();
         FieldType ft = new FieldType();
         ft.setStored(true);
-        ft.setIndexed(true);
+        ft.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         ft.setOmitNorms(true);
         ft.freeze();
 

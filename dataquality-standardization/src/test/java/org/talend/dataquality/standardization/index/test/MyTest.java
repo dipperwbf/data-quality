@@ -17,12 +17,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import junit.framework.TestCase;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.TermVector;
+import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -35,7 +33,8 @@ import org.apache.lucene.search.TopDocsCollector;
 import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
-import org.apache.lucene.util.Version;
+
+import junit.framework.TestCase;
 
 /**
  * DOC scorreia class global comment. Detailled comment
@@ -61,7 +60,7 @@ public class MyTest extends TestCase {
             // Analyzer analyzer = new StandardAnalyzer();
             // the boolean arg in the IndexWriter ctor means to
             // create a new index, overwriting any existing index
-            IndexWriterConfig writerConfig = new IndexWriterConfig(Version.LATEST, analyzer);
+            IndexWriterConfig writerConfig = new IndexWriterConfig(analyzer);
             IndexWriter w = new IndexWriter(index, writerConfig);
             // read the data (this will be the input data of a component called
             // tFirstNameStandardize)
@@ -84,7 +83,7 @@ public class MyTest extends TestCase {
                 QueryParser qp = new QueryParser("FIELD_NAME", analyzer);
                 Query q = qp.parse(data);
 
-                TopDocsCollector<?> collector = TopScoreDocCollector.create(2, false);
+                TopDocsCollector<?> collector = TopScoreDocCollector.create(2);
                 is.search(q, collector);
 
                 ScoreDoc[] scoreDocs = collector.topDocs().scoreDocs;
@@ -114,7 +113,11 @@ public class MyTest extends TestCase {
      */
     private Document createDoc(String data) {
         Document doc = new Document();
-        Field field = new Field("FIELD_NAME", data, Field.Store.YES, Field.Index.ANALYZED, TermVector.YES);
+        FieldType typeAnalyzed = new FieldType();
+        typeAnalyzed.setStored(true);
+        typeAnalyzed.setStoreTermVectors(true);
+        typeAnalyzed.setStoreTermVectors(true);
+        Field field = new Field("FIELD_NAME", data, typeAnalyzed);
         doc.add(field);
         return doc;
     }
