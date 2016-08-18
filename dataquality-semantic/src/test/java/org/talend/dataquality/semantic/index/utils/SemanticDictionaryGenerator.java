@@ -150,12 +150,12 @@ public class SemanticDictionaryGenerator {
         Document doc = new Document();
         FieldType ftWord = new FieldType();
         ftWord.setStored(true);
-        ftWord.setIndexOptions(IndexOptions.NONE);
+        ftWord.setIndexOptions(IndexOptions.DOCS);
         ftWord.setOmitNorms(true);
         ftWord.freeze();
         FieldType ftSyn = new FieldType();
         ftSyn.setStored(false);
-        ftWord.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        ftWord.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
         ftSyn.setOmitNorms(true);
         ftSyn.freeze();
 
