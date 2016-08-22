@@ -40,7 +40,7 @@ public class ClassPathDirectory {
     /**
      * Allow external code to change behavior about extracted Lucene indexes (always extract a fresh copy or reuse
      * previous extract).
-     * 
+     *
      * @param provider An implementation of {@link JARDirectoryProvider}. See {@link BasicProvider} or
      * {@link SingletonProvider} for examples.
      * @see BasicProvider
@@ -63,14 +63,14 @@ public class ClassPathDirectory {
      */
     public synchronized static Directory open(URI uri) {
         LOGGER.debug("Opening '" + uri + "' ...");
-//        if ("jar".equals(uri.getScheme())) {
-//            try {
-//                return provider.get(uri);
-//            } catch (Exception e) {
-//                throw new IllegalArgumentException("Unable to open JAR '" + uri + "'.", e);
-//            }
-//        } else 
-          if ("file".equals(uri.getScheme())) {
+        // if ("jar".equals(uri.getScheme())) {
+        // try {
+        // return provider.get(uri);
+        // } catch (Exception e) {
+        // throw new IllegalArgumentException("Unable to open JAR '" + uri + "'.", e);
+        // }
+        // } else
+        if ("file".equals(uri.getScheme())) {
             try {
                 return new SimpleFSDirectory(Paths.get(uri));
             } catch (IOException e) {
@@ -99,6 +99,7 @@ public class ClassPathDirectory {
 
         /**
          * Returns a {@link Directory lucene directory} for provided location (as URI).
+         * 
          * @param uri An URI to a JAR file.
          * @return A {@link Directory lucene directory} ready to be used in Lucene code.
          * @throws Exception

@@ -27,45 +27,7 @@
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
-			<version>1.5.2</version>
-			<!-- <exclusions>
-			 <exclusion>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-queries</artifactId>
-			 </exclusion>
-			 <exclusion>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-memory</artifactId>
-			 </exclusion>
-			 <exclusion>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-highlighter</artifactId>
-			 </exclusion>
-			 <exclusion>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-sandbox</artifactId>
-			 </exclusion>
-			 <exclusion>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-suggest</artifactId>
-			 </exclusion>
-			 <exclusion>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-misc</artifactId>
-			 </exclusion>
-			 <exclusion>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-join</artifactId>
-			 </exclusion>
-			 <exclusion>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-grouping</artifactId>
-			 </exclusion>
-			 <exclusion>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-spatial</artifactId>
-			 </exclusion>
-			</exclusions> -->
+			<version>2.3.5</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-lang</groupId>
@@ -104,45 +66,6 @@
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
 		</dependency>
-
-<!-- 
-
-                  	 <dependency>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-queries</artifactId>
-			 <version>6.1.0</version></dependency>
-			 <dependency>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-memory</artifactId>
-			 <version>6.1.0</version></dependency>
-			 <dependency>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-highlighter</artifactId>
-			 <version>6.1.0</version></dependency>
-			 <dependency>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-sandbox</artifactId>
-			 <version>6.1.0</version></dependency>
-			 <dependency>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-suggest</artifactId>
-			 <version>6.1.0</version></dependency>
-			 <dependency>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-misc</artifactId>
-			 <version>6.1.0</version></dependency>
-			 <dependency>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-join</artifactId>
-			 <version>6.1.0</version></dependency>
-			 <dependency>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-grouping</artifactId>
-			 <version>6.1.0</version></dependency>
-			 <dependency>
-			 <groupId>org.apache.lucene</groupId>
-			 <artifactId>lucene-spatial</artifactId>
-			 <version>6.1.0</version></dependency> -->
 
 	</dependencies>
 

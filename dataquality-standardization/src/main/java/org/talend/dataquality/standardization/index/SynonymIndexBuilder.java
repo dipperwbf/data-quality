@@ -348,7 +348,7 @@ public class SynonymIndexBuilder {
                 Status status = null;
                 FSDirectory directory = null;
                 try {
-                    directory = FSDirectory.open(Paths.get(path));
+                    directory = FSDirectory.open(folder.toPath());
                     CheckIndex check = new CheckIndex(directory);
                     status = check.checkIndex();
                 } catch (IOException e) {
@@ -446,9 +446,11 @@ public class SynonymIndexBuilder {
     /**
      * Getter for writer.
      *
-     * @return the writer @throws IOException @throws
+     * @return the writer
+     * @throws IOException
+     * @throws
      */
-    public IndexWriter getWriter() throws IOException {
+    IndexWriter getWriter() throws IOException {
         if (writer == null) {
             IndexWriterConfig config = new IndexWriterConfig(this.getAnalyzer());
             writer = new IndexWriter(indexDir, config);

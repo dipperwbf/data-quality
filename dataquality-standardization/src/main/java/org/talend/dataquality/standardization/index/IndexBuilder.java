@@ -71,7 +71,7 @@ public class IndexBuilder {
         if (!new File(csvFileToIndex).exists() || !new File(directoryPath).isDirectory()) {
             throw new IOException(Messages.getString("IndexBuilder.error", csvFileToIndex, directoryPath));//$NON-NLS-1$
         }
-        index = new MMapDirectory(Paths.get(directoryPath));
+        index = new MMapDirectory(new File(directoryPath).toPath());
         // The same analyzer should be used for indexing and searching
         Analyzer analyzer = new StandardAnalyzer();
         // the boolean arg in the IndexWriter ctor means to
@@ -121,7 +121,7 @@ public class IndexBuilder {
             throw new IOException(Messages.getString("IndexBuilder.error", csvFileToIndex, directoryPath));//$NON-NLS-1$
         }
 
-        index = FSDirectory.open(Paths.get(directoryPath));
+        index = FSDirectory.open(new File(directoryPath).toPath());
 
         // The same analyzer should be used for indexing and searching
         Analyzer analyzer = new StandardAnalyzer();

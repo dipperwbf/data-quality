@@ -12,6 +12,7 @@
 // ============================================================================
 package org.talend.dataquality.standardization.index;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
@@ -168,7 +169,7 @@ public class SynonymIndexSearcher {
     }
 
     public void openIndexInFS(String path) throws IOException {
-        FSDirectory indexDir = FSDirectory.open(Paths.get(path));
+        FSDirectory indexDir = FSDirectory.open(new File(path).toPath());
         mgr = new SearcherManager(indexDir, null);
     }
 
@@ -529,6 +530,49 @@ public class SynonymIndexSearcher {
 
         combinedModel.add(wordTermQuery, BooleanClause.Occur.SHOULD);
         combinedModel.add(synTermQuery, BooleanClause.Occur.SHOULD);
+        return combinedModel.build();
+    }
+
+    /**
+     * @param input
+     * @return
+     * @throws IOException
+     */
+    private Query createQueryForSemanticDictionaryDiscovery(String input) throws IOException {
+        Builder combinedModel = new BooleanQuery.Builder();
+        List<String> tokens = getTokensFromAnalyzer(input);
+        // for dictionary search, ignore searching for input containing too many tokens
+        if (tokens.size() > MAX_TOKEN_COUNT_FOR_SEMANTIC_MATCH) {
+            return new TermQuery(new Term(F_SYNTERM, StringUtils.EMPTY));
+        }
+        Query synTermQuery = getTermQuery(F_SYNTERM, StringUtils.join(tokens, ' '), false);
+
+        PhraseQuery.Builder synModel = new PhraseQuery.Builder();
+
+        for (String token : tokens) {
+            token = token.toLowerCase();
+            synModel.add(new Term(F_SYN, token));
+        }
+        combinedModel.add(synTermQuery, BooleanClause.Occur.SHOULD);
+        combinedModel.add(synModel.build(), BooleanClause.Occur.SHOULD);
+        return combinedModel.build();
+    }
+
+    /**
+     * @param input
+     * @return
+     * @throws IOException
+     */
+    private Query createQueryForSemanticDictionaryValidation(String input, String category) throws IOException {
+        Builder combinedModel = new BooleanQuery.Builder();
+        List<String> tokens = getTokensFromAnalyzer(input);
+
+        Query wordTermQuery = getTermQuery(F_WORDTERM, category.toLowerCase(), false);
+
+        Query synTermQuery = getTermQuery(F_SYNTERM, StringUtils.join(tokens, ' '), false);
+
+        combinedModel.add(synTermQuery, BooleanClause.Occur.SHOULD);
+        combinedModel.add(wordTermQuery, BooleanClause.Occur.FILTER);
         return combinedModel.build();
     }
 

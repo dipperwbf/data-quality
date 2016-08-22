@@ -75,10 +75,10 @@ class DefaultCategoryRecognizer implements CategoryRecognizer {
             emptyCount++;
             return new HashSet<>();
         }
-        final Set<String> knownCategory = knownCategoryCache.get(data);
-        if (knownCategory != null) {
-            return knownCategory;
-        }
+        // final Set<String> knownCategory = knownCategoryCache.get(data);
+        //  if (knownCategory != null) {
+        //      return knownCategory;
+        //  }
 
         MainCategory mainCategory = MainCategory.getMainCategory(data);
         Set<String> subCategorySet = new HashSet<>();

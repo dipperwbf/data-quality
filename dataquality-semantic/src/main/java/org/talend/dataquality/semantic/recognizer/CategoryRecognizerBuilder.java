@@ -14,10 +14,10 @@ package org.talend.dataquality.semantic.recognizer;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.InetSocketAddress;
 import java.net.URI;
 
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.talend.dataquality.semantic.index.ESIndex;
@@ -95,9 +95,9 @@ public class CategoryRecognizerBuilder implements Serializable {
             LuceneIndex keyword = getKeywordIndex();
             return new DefaultCategoryRecognizer(dict, keyword);
         case ELASTIC_SEARCH:
-            Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build();
-            TransportClient client = new TransportClient(settings)
-                    .addTransportAddress(new InetSocketTransportAddress(host, port));
+            Settings settings = Settings.builder().put("cluster.name", clusterName).build();
+            TransportClient client = TransportClient.builder().settings(settings).build()
+                    .addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress(host, port)));
             ESIndex esDict = new ESIndex(client, ESIndex.ES_DATADICT_INDEX, ESIndex.ES_DATADICT_TYPE);
             ESIndex esKeyword = new ESIndex(client, ESIndex.ES_KEYWORD_INDEX, ESIndex.ES_KEYWORD_TYPE);
             return new DefaultCategoryRecognizer(esDict, esKeyword);

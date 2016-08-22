@@ -12,7 +12,7 @@
 // ============================================================================
 package org.talend.dataquality.standardization.index;
 
-import java.nio.file.Paths;
+import java.io.File;
 
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
@@ -53,7 +53,7 @@ public class Explainer {
         }
         String indexDir = args[0];
         String queryExpression = args[1];
-        Directory directory = FSDirectory.open(Paths.get(indexDir));
+        Directory directory = FSDirectory.open(new File(indexDir).toPath());
         QueryParser parser = new QueryParser("contents", new SimpleAnalyzer());
         Query query = parser.parse(queryExpression);
         System.out.println("Query: " + queryExpression);

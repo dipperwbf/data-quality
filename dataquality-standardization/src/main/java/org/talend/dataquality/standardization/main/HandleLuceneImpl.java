@@ -12,6 +12,7 @@
 // ============================================================================
 package org.talend.dataquality.standardization.main;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -164,7 +165,7 @@ public class HandleLuceneImpl implements HandleLucene {
         Directory dir = null;
         IndexSearcher is = null;
         try {
-            dir = FSDirectory.open(Paths.get(folderName));
+            dir = FSDirectory.open(new File(folderName).toPath());
             IndexReader reader = DirectoryReader.open(dir);
             is = new IndexSearcher(reader);
         } catch (CorruptIndexException e) {

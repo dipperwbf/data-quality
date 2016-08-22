@@ -57,8 +57,8 @@ public class FirstNameStandardize {
      * containing 4 to 7 letters, while for those with 8 to 12 letters, 2 erroneous letters are allowed. a first name
      * between 12 and 15 letters, allows a distance of 3, and so on ...
      * <p>
-     * For the first names with minus sign inside, ex: Jean-Baptiste, the matching is done for Jean and Baptiste
-     * separately, and the number of tokens is also considered by Lucene.
+     * For the first names with minus sign inside, ex: Jean-Baptiste, the matching is done for Jean and Baptiste separately, and
+     * the number of tokens is also considered by Lucene.
      */
     @Deprecated
     private static final float MATCHING_SIMILARITY = 0.74f;

@@ -12,6 +12,7 @@
 // ============================================================================
 package org.talend.dataquality.standardization.index.test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 
@@ -52,7 +53,7 @@ public class SynonymTest extends TestCase {
     public void testRun() {
         MMapDirectory index;
         try {
-            index = new MMapDirectory(Paths.get(directoryPath));
+            index = new MMapDirectory(new File(directoryPath).toPath());
             // The same analyzer should be used for indexing and searching
             Analyzer analyzer = createAnalyzer();
             // Analyzer analyzer = new StandardAnalyzer();
@@ -82,7 +83,7 @@ public class SynonymTest extends TestCase {
         Directory dir = null;
         IndexSearcher is = null;
         try {
-            dir = FSDirectory.open(Paths.get(directoryPath));
+            dir = FSDirectory.open(new File(directoryPath).toPath());
             DirectoryReader indexReader = DirectoryReader.open(dir);
             is = new IndexSearcher(indexReader);
             Analyzer analyzer = createAnalyzer();

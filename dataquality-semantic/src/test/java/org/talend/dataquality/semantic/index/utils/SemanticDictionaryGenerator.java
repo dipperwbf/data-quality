@@ -1,3 +1,4 @@
+
 package org.talend.dataquality.semantic.index.utils;
 
 import java.io.FileReader;
@@ -11,24 +12,30 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.io.File;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang.StringUtils;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.NIOFSDirectory;
+import org.apache.lucene.util.Version;
 import org.talend.dataquality.semantic.index.utils.optimizer.CategoryOptimizer;
 import org.talend.dataquality.standardization.index.SynonymIndexBuilder;
 import org.talend.dataquality.standardization.index.SynonymIndexSearcher;
 
 public class SemanticDictionaryGenerator {
 
-    private static final String DD_PATH = "src/main/resources/luceneIdx/dictionary/";
+    private static final String DD_PATH = "/home/jdenantes/talend/src/data-quality/dataquality-semantic/src/main/resources/luceneIdx/dictionary/";
 
     /**
      * KW_PATH is not needed for the moment
@@ -37,7 +44,7 @@ public class SemanticDictionaryGenerator {
 
     private static Pattern SPLITTER = Pattern.compile("\\|");
 
-    // private Analyzer analyzer = new StandardAnalyzer();
+    private Analyzer analyzer = new StandardAnalyzer();
 
     private SynonymIndexBuilder builder = new SynonymIndexBuilder();
 
@@ -150,14 +157,19 @@ public class SemanticDictionaryGenerator {
         Document doc = new Document();
         FieldType ftWord = new FieldType();
         ftWord.setStored(true);
-        ftWord.setIndexOptions(IndexOptions.DOCS);
+        ftWord.setIndexOptions(IndexOptions.NONE);
         ftWord.setOmitNorms(true);
+        ftWord.setTokenized(false);
         ftWord.freeze();
         FieldType ftSyn = new FieldType();
-        ftSyn.setStored(false);
-        ftWord.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
-        ftSyn.setOmitNorms(true);
+        ftSyn.setStored(true);
+        ftSyn.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         ftSyn.freeze();
+        // FieldType ftSynTerm = new FieldType();
+        // ftSynTerm.setStored(true);
+        // ftSynTerm.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
+        // ftSynTerm.setTokenized(false);
+        // ftSynTerm.freeze();
 
         Field wordField = new Field(SynonymIndexSearcher.F_WORD, tempWord, ftWord);
         doc.add(wordField);
@@ -177,7 +189,9 @@ public class SemanticDictionaryGenerator {
 
                 if (syn.length() > 0 && !syn.equals(tempWord)) {
                     doc.add(new Field(SynonymIndexSearcher.F_SYN, syn, ftSyn));
-
+                    // doc.add(new Field(SynonymIndexSearcher.F_SYNTERM, syn, ftSynTerm));
+                    // String joinedTokens = null;
+                    //
                     try {
                         String joinedTokens = StringUtils.join(SynonymIndexSearcher.getTokensFromAnalyzer(syn), ' ');
                         doc.add(new StringField(SynonymIndexSearcher.F_SYNTERM, joinedTokens, Field.Store.YES));
@@ -186,6 +200,8 @@ public class SemanticDictionaryGenerator {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
+                    //// if (joinedTokens != null && joinedTokens != syn)
+                    // doc.add(new Field(SynonymIndexSearcher.F_SYN, syn, ftSyn));
                 }
             }
         }
@@ -195,15 +211,9 @@ public class SemanticDictionaryGenerator {
     private void generateAll() {
         try {
             builder.deleteIndexFromFS(DD_PATH);
-            builder.initIndexInFS(DD_PATH);
-            FSDirectory outputDir = FSDirectory.open(Paths.get(DD_PATH));
-            // IndexWriterConfig writerConfig = new IndexWriterConfig(new SimpleAnalyzer());
-            // the boolean arg in the IndexWriter ctor means to
-            // create a new index, overwriting any existing index
-            // IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
-            // config.setOpenMode(OpenMode.CREATE_OR_APPEND);
-
-            IndexWriter writer = builder.getWriter();
+            FSDirectory outputDir = NIOFSDirectory.open(new File(DD_PATH).toPath());
+            IndexWriterConfig writerConfig = new IndexWriterConfig(analyzer);
+            IndexWriter writer = new IndexWriter(outputDir, writerConfig);
             for (DictionaryGenerationSpec spec : DictionaryGenerationSpec.values()) {
                 try {
                     generateDictionaryForSpec(spec, writer);
