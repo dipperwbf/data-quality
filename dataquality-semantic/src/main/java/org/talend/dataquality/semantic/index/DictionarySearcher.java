@@ -29,14 +29,7 @@ import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.FuzzyQuery;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -93,6 +86,12 @@ public class DictionarySearcher {
 
     private DictionarySearchMode searchMode = DictionarySearchMode.MATCH_SEMANTIC_DICTIONARY;
 
+    // private static final CachingWrapperFilter cache = new FieldCacheTermsFilter(F_WORD,"LAST_NAME");
+    // private static final CachingWrapperFilter cache = new CachingWrapperFilter(new QueryWrapperFilter(new TermQuery(new
+    // Term(F_WORD,"LAST_NAME"))));
+
+    private static final CachingWrapperFilter cache = new CachingWrapperFilter(new FieldCacheTermsFilter(F_WORD, "CITY"));
+
     /**
      * SynonymIndexSearcher constructor creates this searcher and initializes the index.
      *
@@ -147,7 +146,7 @@ public class DictionarySearcher {
             break;
         }
         final IndexSearcher searcher = mgr.acquire();
-        topDocs = searcher.search(query, topDocLimit);
+        topDocs = searcher.search(query, cache, topDocLimit);
         mgr.release(searcher);
         return topDocs;
     }
