@@ -1,3 +1,6 @@
+V3.0.4 2016-09-06
+	- TDQ-12502 t-swoosh match analysis can not get same result for "Chart" and Run analysis
+
 V3.0.3 2016-01-02
     - move to data-quality repository, change parent pom
     - TDQ-11425 Add catch SQLException, continue to do next when execute "next()" and get SQLException

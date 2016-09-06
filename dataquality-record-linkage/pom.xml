@@ -19,7 +19,7 @@
 
         <!-- This is used to generate README.md file -->
         <commons.componentid>org.talend.dataquality.record.linkage</commons.componentid>
-        <commons.release.version>3.0.3</commons.release.version>
+        <commons.release.version>3.0.4</commons.release.version>
     </properties>
 
 
